@@ -1,0 +1,293 @@
+zabbix_export:
+  version: '7.4'
+  template_groups:
+    - uuid: 6644054d220244ce8b9dbc269b710995
+      name: Templates/Applications
+  templates:
+    - uuid: 5e8324224c554aeb8d2baacc3477b1ce
+      template: 'Salt Minion Health'
+      name: 'Salt Minion Health'
+      description: |
+        Monitors the local salt-minion process for:
+          1. Is it running
+          2. Is it hung (unresponsive / stuck jobs / stuck highstate run)
+          3. Did the last recorded highstate succeed, and how stale is that record
+
+        Requires:
+          - salt_check.sh installed at /etc/zabbix/scripts/salt_check.sh
+          - salt-highstate-wrapper.sh scheduled (systemd timer or cron) in
+            place of a bare `salt-call state.highstate`
+          - UserParameter=salt.check,sudo /etc/zabbix/scripts/salt_check.sh
+            in the agent config, plus the matching sudoers entry
+      groups:
+        - name: Templates/Applications
+      macros:
+        - macro: '{$SALT.HIGHSTATE.MAXAGE}'
+          value: '5400'
+          description: 'Seconds before a highstate record is considered stale. Set to roughly 2x your highstate schedule interval.'
+      items:
+        - uuid: 556c0234229844dd88274ccd6387c83f
+          name: 'Salt check (raw JSON)'
+          type: ZABBIX_PASSIVE
+          key: salt.check
+          delay: 5m
+          history: 7d
+          trends: '0'
+          value_type: TEXT
+          timeout: 30s
+          description: 'Raw JSON from salt_check.sh. Individual metrics are split out via dependent items below.'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: a556e1e2b219475d83fcc981e1a70ce0
+          name: 'Salt minion process running'
+          type: DEPENDENT
+          key: salt.process.running
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.process.running'
+          tags:
+            - tag: component
+              value: salt
+          triggers:
+            - uuid: 0ffb26f1c2de4a8eb2e6a67285304d92
+              name: 'Salt minion process is not running on {HOST.NAME}'
+              expression: 'last(/Salt Minion Health/salt.process.running)=0'
+              priority: HIGH
+              description: 'salt-minion is not active according to systemd/process table.'
+
+            - uuid: 2bb9f51a0d8e4d469f82c0a37ab1c150
+              name: 'Salt minion appears hung on {HOST.NAME}'
+              expression: 'last(/Salt Minion Health/salt.process.running)=1 and (last(/Salt Minion Health/salt.hung.ping_ok)=0 or last(/Salt Minion Health/salt.hung.stuck_jobs)>0 or last(/Salt Minion Health/salt.hung.highstate_run_hung)=1)'
+              priority: HIGH
+              description: 'Process exists but is not responding to a local salt-call ping, has a job stuck executing, or has a highstate run that has been in progress far longer than expected.'
+              dependencies:
+                - name: 'Salt minion process is not running on {HOST.NAME}'
+                  expression: 'last(/Salt Minion Health/salt.process.running)=0'
+
+        - uuid: 482af84f95434fddb555ec8af5960ae8
+          name: 'Salt minion PID'
+          type: DEPENDENT
+          key: salt.process.pid
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.process.pid'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: 96bd644755ff4cab998f920821c280e2
+          name: 'Salt minion process uptime'
+          type: DEPENDENT
+          key: salt.process.uptime
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          units: s
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.process.uptime_seconds'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: b9a54e5ba0354a608e46d3cbe659cccd
+          name: 'Salt minion responds to local ping'
+          type: DEPENDENT
+          key: salt.hung.ping_ok
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.hung.ping_ok'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: 82f92b5117304c6eac6071eb6d0a10ea
+          name: 'Salt minion ping response time'
+          type: DEPENDENT
+          key: salt.hung.ping_ms
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          units: ms
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.hung.ping_response_ms'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: 1bf70df82fa84cbc9f90cde0918ecbb4
+          name: 'Salt minion stuck job count'
+          type: DEPENDENT
+          key: salt.hung.stuck_jobs
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.hung.stuck_jobs'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: 5f9a84be7f484a85841d84536a1dcb16
+          name: 'Salt minion longest running job'
+          type: DEPENDENT
+          key: salt.hung.longest_job_seconds
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          units: s
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.hung.longest_running_job_seconds'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: 1dcccb433c6f46dbb6add43befb0eae1
+          name: 'Salt highstate run appears hung'
+          type: DEPENDENT
+          key: salt.hung.highstate_run_hung
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.hung.highstate_run_hung'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: 9c33a4c42ee542ada2717eeede5b2e22
+          name: 'Last highstate succeeded'
+          type: DEPENDENT
+          key: salt.highstate.success
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.highstate.success'
+          tags:
+            - tag: component
+              value: salt
+          triggers:
+            - uuid: 6d46580ac7e44827ae26b977c522fe33
+              name: 'Last Salt highstate failed on {HOST.NAME}'
+              expression: 'last(/Salt Minion Health/salt.highstate.success)=0 and last(/Salt Minion Health/salt.highstate.failed_states)>0'
+              priority: HIGH
+              description: 'The most recently recorded highstate run had one or more failed states. Check the value of salt.highstate.error and the JSON file at /var/lib/zabbix-salt/last-highstate-output.json for details.'
+
+        - uuid: 688c59d6669840c7bbfa20cd8a660742
+          name: 'Last highstate age'
+          type: DEPENDENT
+          key: salt.highstate.age
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          units: s
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.highstate.age_seconds'
+          tags:
+            - tag: component
+              value: salt
+          triggers:
+            - uuid: a96c97b80fcb4b3b9ce916aab52cc952
+              name: 'No successful Salt highstate recorded recently on {HOST.NAME}'
+              expression: 'last(/Salt Minion Health/salt.highstate.age)>{$SALT.HIGHSTATE.MAXAGE}'
+              priority: AVERAGE
+              description: 'Either the highstate wrapper/timer has stopped running, or no highstate has ever completed on this host. Compare against the scheduled interval and adjust {$SALT.HIGHSTATE.MAXAGE} if needed.'
+
+        - uuid: 2a99f8cd46364d73be7c08b0d8d3cca2
+          name: 'Last highstate failed state count'
+          type: DEPENDENT
+          key: salt.highstate.failed_states
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.highstate.failed_states'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: 557f4fd608ed4ce6a98d53247bb1ff9f
+          name: 'Last highstate total state count'
+          type: DEPENDENT
+          key: salt.highstate.total_states
+          delay: '0'
+          history: 7d
+          value_type: UNSIGNED
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.highstate.total_states'
+          tags:
+            - tag: component
+              value: salt
+
+        - uuid: 16b995e432f842b191984d73e6372d5c
+          name: 'Last highstate error message'
+          type: DEPENDENT
+          key: salt.highstate.error
+          delay: '0'
+          history: 7d
+          value_type: TEXT
+          master_item:
+            key: salt.check
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.highstate.error'
+          tags:
+            - tag: component
+              value: salt

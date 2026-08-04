@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Salt highstate and record result for Zabbix monitoring
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/salt-highstate-wrapper.sh
+# Prevents overlapping runs at the systemd level too (belt & suspenders with
+# the flock inside the script itself).

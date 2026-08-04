@@ -1,0 +1,9 @@
+name: zabbix
+os: Debian, Raspbian, Ubuntu
+os_family: Debian
+version: 1.0.0
+release: 1
+minimum_version: 3006
+summary: 'zabbix formula'
+description: 'A SaltStack formula for installing and configuring Zabbix 7.4: agent2, server, proxy, web frontend, and the MySQL/PostgreSQL backend for the server.'
+top_level_dir: zabbix

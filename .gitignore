@@ -1,0 +1,25 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Editors
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Packaging / test artefacts
+*.egg-info/
+.kitchen/
+.kitchen.local.yml
+/.bundle/
+/Gemfile.lock
+/vendor/
+.tox/
+.pytest_cache/

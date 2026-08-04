@@ -1,0 +1,141 @@
+# -*- coding: utf-8 -*-
+# vim: ft=yaml
+---
+zabbix:
+  # This formula only targets Zabbix 7.4. Older versions are no longer
+  # supported: repo URLs, GPG keys, and the config templates assume the
+  # 7.4 package layout (see repo.sls and mysql/pgsql schema.sls).
+  version_repo: 7.4
+  user: zabbix
+  group: zabbix
+  home: /var/lib/zabbix
+  shell: /usr/sbin/nologin
+  agent:
+    pkgs:
+      - zabbix-agent2
+      - zabbix-sender
+    service: zabbix-agent2
+    config: /etc/zabbix/zabbix_agent2.conf
+    pidfile: /var/run/zabbix/zabbix_agent2.pid
+    logfile: /var/log/zabbix/zabbix_agent2.log
+    logfilesize: '0'
+    server:
+      - 127.0.0.1
+    serveractive:
+      - 127.0.0.1
+    includes:
+      - /etc/zabbix/zabbix_agentd2.d/
+  server:
+    pkgs:
+      - zabbix-web-service
+      - zabbix-server-mysql
+      - zabbix-sql-scripts
+      - zabbix-get
+    alertscriptspath: /usr/lib/zabbix/alertscripts
+    allowroot: '0'
+    allowunsupporteddb: '0'
+    cachesize: '32M'
+    cacheupdatefrequency: '60'
+    config: /etc/zabbix/zabbix_server.conf
+    dbhost: localhost
+    dbname: zabbix
+    dbpassword: zabbix
+    dbsocket: /run/mysqld/mysqld.sock
+    dbuser: zabbix
+    externalscripts: /usr/lib/zabbix/externalscripts
+    fping6location: /usr/bin/fping6
+    fpinglocation: /usr/bin/fping
+    historycachesize: '16M'
+    historyindexcachesize: '4M'
+    historystoragedateindex: '0'
+    housekeepingfrequency: '1'
+    include: '/etc/zabbix/zabbix_server.conf.d'
+    listenip: '0.0.0.0'
+    loadmodulepath: '/usr/lib/zabbix/modules'
+    logfilesize: '0'
+    logfile: /var/log/zabbix/zabbix_server.log
+    logslowqueries: '3000'
+    maxhousekeeperdelete: '5000'
+    pidfile: /run/zabbix/zabbix_server.pid
+    pluginsocket: /run/zabbix/agent.plugin.sock
+    proxyconfigfrequency: '3600'
+    proxydatafrequency: '1'
+    service: zabbix-server
+    webservice: zabbix-web-service
+    snmptrapperfile: '/tmp/zabbix_traps.tmp'
+    socketdir: /run/zabbix
+    sslcertlocation: '/usr/lib/zabbix/ssl/certs'
+    sslkeylocation: '/usr/lib/zabbix/ssl/keys'
+    startalerters: '3'
+    startdbsyncers: '4'
+    startdiscoverers: '1'
+    startconnectors: '1'
+    startescalators: '1'
+    starthistorypollers: '5'
+    starthttppollers: '1'
+    startipmipollers: '0'
+    startjavapollers: '0'
+    startlldprocessors: '2'
+    startpingers: '1'
+    startpollers: '5'
+    startpollersunreachable: '1'
+    startpreprocessors: '3'
+    startproxypollers: '1'
+    startreportwriters: '0'
+    startsnmptrapper: '0'
+    starttimers: '1'
+    starttrappers: '5'
+    startvmwarecollectors: '0'
+    statsallowedip: '127.0.0.1'
+    timeout: '4'
+    tmpdir: '/tmp'
+    trappertimeout: '300'
+    trendcachesize: '4M'
+    trendfunctioncachesize: '4M'
+    unavailabledelay: '60'
+    unreachabledelay: '60'
+    unreachableperiod: '45'
+    user: 'zabbix'
+    valuecachesize: '8M'
+    vmwarecachesize: '8M'
+    vmwarefrequency: '60'
+    vmwareperffrequency: '60'
+    vmwaretimeout: '10'
+    webserviceurl: 'http://localhost:10053/report'
+  frontend:
+    pkgs:
+      - zabbix-web-service
+    config: /etc/zabbix/web/zabbix.conf.php
+    dbtype: MYSQL
+    dbhost: localhost
+    dbname: zabbix
+    dbuser: zabbix
+    dbport: 3306
+    dbpassword: zabbix
+    zbxserver: localhost
+    zbxserverport: '10051'
+    zbxservername: Zabbix installed with SaltStack
+  proxy:
+    pkgs:
+      - zabbix-proxy-sqlite3
+      - zabbix-get
+    service: zabbix-proxy
+    config: /etc/zabbix/zabbix_proxy.conf
+    dbname: /var/lib/zabbix/zabbix_proxy.db
+    pidfile: /var/run/zabbix/zabbix_proxy.pid
+    logfile: /var/log/zabbix/zabbix_proxy.log
+  mysql:
+    pkgs:
+      - zabbix-sql-scripts
+    skip_pkgs: false
+    dbhost: localhost
+    dbname: zabbix
+    dbuser: zabbix
+    dbpassword: zabbix
+    dbuser_host: localhost
+  pgsql:
+    skip_pkgs: false
+    dbhost: localhost
+    dbname: zabbix
+    dbuser: zabbix
+    dbpassword: zabbix

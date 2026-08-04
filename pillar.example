@@ -1,0 +1,210 @@
+# -*- coding: utf-8 -*-
+# vim: ft=yaml
+#
+# pillar.example — reference pillar for the zabbix-formula (Zabbix 7.4)
+#
+# Remember the split described in README.md:
+#   zabbix:            -> HOW to install things (packages, versions, paths, service names)
+#   zabbix-agent:       -> agent RUNTIME config      (zabbix_agent2.conf)
+#   zabbix-server:      -> server RUNTIME config      (zabbix_server.conf)
+#   zabbix-proxy:       -> proxy RUNTIME config        (zabbix_proxy.conf)
+#   zabbix-frontend:    -> frontend RUNTIME config      (zabbix.conf.php)
+#   zabbix-mysql:       -> MySQL backend for the server/proxy
+#   zabbix-pgsql:       -> PostgreSQL backend for the server/proxy
+#
+# You do not need every block below on every minion - split this across
+# separate pillar files/targets (server, proxy, agent-only hosts, etc.)
+# to taste; it's combined here purely for reference.
+# ---------------------------------------------------------------------------
+
+zabbix:
+  # Only Zabbix 7.4 is supported by this formula's templates/repos.
+  version_repo: 7.4
+
+  # System account used to run every zabbix daemon.
+  user: zabbix
+  group: zabbix
+  # Extra supplementary groups for the zabbix user, e.g. to let the agent
+  # read the Docker socket for docker.* checks.
+  user_groups:
+    - docker
+
+  agent:
+    pkgs:
+      - zabbix-agent2
+      - zabbix-sender
+    # Pin a specific package version if you don't want floating minor
+    # releases; comment out to always take the latest 7.4.x from the repo.
+    # version: 7.4.1-1+ubuntu24.04
+    service: zabbix-agent2
+    config: /etc/zabbix/zabbix_agent2.conf
+    pidfile: /var/run/zabbix/zabbix_agent2.pid
+    logfile: /var/log/zabbix/zabbix_agent2.log
+
+  server:
+    pkgs:
+      - zabbix-server-mysql
+      - zabbix-sql-scripts
+      - zabbix-get
+      - zabbix-web-service
+    service: zabbix-server
+    webservice: zabbix-web-service
+    config: /etc/zabbix/zabbix_server.conf
+    logfile: /var/log/zabbix/zabbix_server.log
+    pidfile: /run/zabbix/zabbix_server.pid
+
+  frontend:
+    pkgs:
+      - zabbix-web-service
+      - zabbix-frontend-php
+    config: /etc/zabbix/web/zabbix.conf.php
+
+  proxy:
+    pkgs:
+      - zabbix-proxy-sqlite3
+      - zabbix-get
+    service: zabbix-proxy
+    config: /etc/zabbix/zabbix_proxy.conf
+    dbname: /var/lib/zabbix/zabbix_proxy.db   # sqlite file path -> sqlite mode
+    logfile: /var/log/zabbix/zabbix_proxy.log
+    pidfile: /var/run/zabbix/zabbix_proxy.pid
+
+  mysql:
+    pkgs:
+      - zabbix-sql-scripts
+
+  pgsql:
+    pkgs:
+      - postgresql-client-common
+      - postgresql-client
+
+# ---------------------------------------------------------------------------
+# Agent runtime configuration
+# ---------------------------------------------------------------------------
+zabbix-agent:
+  server:
+    - 10.0.0.10          # Zabbix server/proxy IP(s), for passive checks
+  serveractive:
+    - 10.0.0.10:10051    # Zabbix server/proxy IP:port, for active checks
+  hostname: web01.example.com
+
+  logfilesize: '0'        # 0 = unlimited/no rotation
+  timeout: '10'
+  refreshactivechecks: '120'
+  buffersend: '5'
+  buffersize: '100'
+
+  # Directory the formula pre-creates for you; drop per-service .conf
+  # files here (see README.md "Adding checks to the agent", option 3).
+  includes:
+    - /etc/zabbix/zabbix_agent2.d/
+
+  # --- Custom checks: simplest form, inline UserParameters -----------------
+  # Format is the literal `key,command` string as it appears in the config.
+  userparameters:
+    - 'mysql.ping,mysqladmin ping 2>&1'
+    - 'app.queue.depth,/usr/local/bin/queue_depth.sh'
+    # Flexible/parametrized key using $1, $2, ... placeholders:
+    - 'custom.service.status[*],systemctl is-active $1 2>&1'
+    - 'app.http.check[*],curl -s -o /dev/null -w "%{http_code}" http://localhost:$1'
+
+  # Needed only if a UserParameter command relies on shell metacharacters
+  # being passed through from item parameters (see README for the list of
+  # characters this unblocks). Leave unset/0 unless you specifically need it.
+  # unsafeuserparameters: 1
+
+  # system.run[*] is denied by default in agent2; only allow it if you
+  # understand the security tradeoff of remote command execution.
+  # allowkey: 'system.run[*]'
+
+  # TLS between agent and server/proxy (optional):
+  # tlsconnect: psk
+  # tlsaccept: psk
+  # tlspskidentity: 'PSK 001'
+  # tlspskfile: /etc/zabbix/zabbix_agentd.psk
+
+# ---------------------------------------------------------------------------
+# Server runtime configuration
+# ---------------------------------------------------------------------------
+zabbix-server:
+  dbhost: localhost
+  dbname: zabbix
+  dbuser: zabbix
+  dbpassword: 'change-me-strong-password'
+  cachesize: '128M'
+  historycachesize: '32M'
+  valuecachesize: '32M'
+  startpollers: '10'
+  startpingers: '2'
+  logfile: /var/log/zabbix/zabbix_server.log
+  logfilesize: '0'
+  timeout: '10'
+
+# ---------------------------------------------------------------------------
+# Proxy runtime configuration (only needed on proxy hosts)
+# ---------------------------------------------------------------------------
+zabbix-proxy:
+  server: 10.0.0.10
+  hostname: proxy01.example.com
+  # SQLite is the default (dbname is a file path under zabbix.proxy.dbname
+  # above). To use MySQL/PostgreSQL instead, switch zabbix:proxy:pkgs to
+  # zabbix-proxy-mysql / zabbix-proxy-pgsql and set:
+  # dbhost: localhost
+  # dbname: zabbix_proxy
+  # dbuser: zabbix_proxy
+  # dbpassword: 'change-me-strong-password'
+  includes:
+    - /etc/zabbix/zabbix_proxy.d/
+
+# ---------------------------------------------------------------------------
+# Frontend runtime configuration
+# ---------------------------------------------------------------------------
+zabbix-frontend:
+  dbtype: MYSQL
+  dbhost: localhost
+  dbname: zabbix
+  dbuser: zabbix
+  dbpassword: 'change-me-strong-password'
+  dbport: 3306
+  zbxserver: localhost
+  zbxserverport: '10051'
+  zbxservername: 'Example Co. Zabbix'
+
+# ---------------------------------------------------------------------------
+# MySQL backend for zabbix.server (db + user + grants + schema import)
+# ---------------------------------------------------------------------------
+zabbix-mysql:
+  dbhost: localhost
+  dbname: zabbix
+  dbuser: zabbix
+  dbpassword: 'change-me-strong-password'
+  dbuser_host: localhost
+  # The role includes the shared mysql formula. That formula installs
+  # saltext-mysql into Salt's onedir Python runtime and supplies the local
+  # administrative socket settings used by these states.
+  # Local administration inherits mysql:connection and therefore uses the
+  # Unix socket even when mysqld is bound only to a host address.
+  # Override this block only for a remote database server:
+  # connection:
+  #   method: tcp
+  #   host: 192.0.2.10
+  #   port: 3306
+  # Uncomment if the minion doesn't already have MySQL root credentials
+  # available to Salt's mysql module (e.g. via /etc/mysql/debian.cnf):
+  # dbroot_user: root
+  # dbroot_pass: 'root-password'
+  # Only needed for an air-gapped install where you want to vendor your own
+  # schema dump via TOFS instead of the one shipped by zabbix-sql-scripts:
+  # sql_file: /usr/share/zabbix-sql-scripts/mysql/server.sql.gz
+
+# ---------------------------------------------------------------------------
+# PostgreSQL backend for zabbix.server (alternative to MySQL above)
+# ---------------------------------------------------------------------------
+zabbix-pgsql:
+  dbhost: localhost
+  dbname: zabbix
+  dbuser: zabbix
+  dbpassword: 'change-me-strong-password'
+  # dbroot_user: postgres
+  # dbroot_pass: 'postgres-password'
+  # sql_file: /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz

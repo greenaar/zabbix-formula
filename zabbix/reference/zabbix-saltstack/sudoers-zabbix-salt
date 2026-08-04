@@ -1,0 +1,10 @@
+# Install as /etc/sudoers.d/zabbix-salt (mode 0440)
+#
+# Lets the zabbix agent user run the Salt check script as root without a
+# password, without granting root generally. Required because the script
+# needs to read the minion's PID/proc info and call salt-call using the
+# minion's own (root-owned) config/cache.
+#
+# Validate with `visudo -c -f /etc/sudoers.d/zabbix-salt` after installing.
+
+zabbix ALL=(root) NOPASSWD: /etc/zabbix/scripts/salt_check.sh

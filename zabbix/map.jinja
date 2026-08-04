@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+# vim: ft=jinja
+
+{#- Start imports as #}
+{%- import_yaml "zabbix/defaults.yaml" as default_settings %}
+{%- import_yaml "zabbix/osfamilymap.yaml" as osfamilymap %}
+{%- import_yaml "zabbix/osmap.yaml" as osmap %}
+{%- import_yaml "zabbix/osfingermap.yaml" as osfingermap %}
+
+{#- Retrieve the config dict only once #}
+{%- set _config = salt['config.get']('zabbix', default={}) %}
+
+{%- set config = salt['grains.filter_by'](
+      default_settings,
+      default='zabbix',
+      merge=salt['grains.filter_by'](
+        osfamilymap,
+        grain='os_family',
+        merge=salt['grains.filter_by'](
+          osmap,
+          grain='os',
+          merge=salt['grains.filter_by'](
+            osfingermap,
+            grain='osfinger',
+            merge=salt['grains.filter_by'](
+              _config,
+              default='lookup'
+            )
+          )
+        )
+      )
+    )
+%}
+
+{%- set zabbix = config %}
