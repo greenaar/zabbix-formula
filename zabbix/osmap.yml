@@ -3,7 +3,7 @@
 #
 # Setup variables using grains['os'] based logic.
 # You just need to add the key:values for an `os` that differ
-# from `defaults.yaml` + `osarch.yaml` + `os_family.yaml`.
+# from `defaults.yml` + `osarchmap.yml` + `osfamilymap.yml`.
 # Only add an `os` which is/will be supported by the formula.
 #
 # If you do not need to provide defaults via the `os` grain,

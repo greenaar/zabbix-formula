@@ -3,7 +3,7 @@
 #
 # Setup variables using grains['osfinger'] based logic.
 # You just need to add the key:values for an `osfinger` that differ
-# from `defaults.yaml` + `osarch.yaml` + `os_family.yaml` + `osmap.yaml`.
+# from `defaults.yml` + `osarchmap.yml` + `osfamilymap.yml` + `osmap.yml`.
 # Only add an `osfinger` which is/will be supported by the formula.
 #
 # If you do not need to provide defaults via the `os_finger` grain,

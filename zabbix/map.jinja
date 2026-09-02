@@ -1,35 +1,51 @@
 # -*- coding: utf-8 -*-
 # vim: ft=jinja
+#
+# Merge order, lowest precedence first:
+#
+#   1. defaults.yml           the formula's own defaults
+#   2. osfamilymap.yml        by `os_family` grain
+#   3. osmap.yml              by `os` grain
+#   4. osfingermap.yml        by `osfinger` grain
+#   5. pillar zabbix:lookup   site configuration
+#
+# This replaces a nest of four `grains.filter_by(..., merge=...)` calls that
+# expressed the same order inside out. `strategy='recurse'` matches what
+# filter_by's `merge=` did (salt.utils.dictupdate.update), and
+# `merge_lists=False` keeps every layer replacing lists rather than extending
+# them - filter_by never appends, on any layer.
+#
+# Note the last layer: unlike most formulas here, this one takes site
+# configuration only from `zabbix:lookup`, never from the top level of the
+# `zabbix` pillar. That is how the fleet's pillar is written
+# (pillarstack/*/zabbix*.yml all nest under `lookup`), so the top level is
+# left alone rather than quietly becoming meaningful.
+#
+# `config.get` rather than `pillar.get`: the previous map read the formula's
+# config through config.get, which also searches minion opts and grains, and
+# narrowing that to pillar would be a behaviour change rather than a refactor.
+#
+# None of the OS tables carry a `default:` key, so a grain matching nothing
+# contributes an empty dict, exactly as filter_by returning None did.
 
-{#- Start imports as #}
-{%- import_yaml "zabbix/defaults.yaml" as default_settings %}
-{%- import_yaml "zabbix/osfamilymap.yaml" as osfamilymap %}
-{%- import_yaml "zabbix/osmap.yaml" as osmap %}
-{%- import_yaml "zabbix/osfingermap.yaml" as osfingermap %}
+{#- Spelled out rather than derived from `tpldir`: `tpldir` is the importer's
+   directory and is not set at all when map.jinja is imported from a template
+   rendered as a `file.managed` source, which several of this formula's states
+   do. This map never used `tpldir` before and must not start. #}
+{%- set tplroot = 'zabbix' %}
 
-{#- Retrieve the config dict only once #}
-{%- set _config = salt['config.get']('zabbix', default={}) %}
+{%- import_yaml tplroot ~ "/defaults.yml" as defaults %}
+{%- import_yaml tplroot ~ "/osfamilymap.yml" as osfamilymap %}
+{%- import_yaml tplroot ~ "/osmap.yml" as osmap %}
+{%- import_yaml tplroot ~ "/osfingermap.yml" as osfingermap %}
 
-{%- set config = salt['grains.filter_by'](
-      default_settings,
-      default='zabbix',
-      merge=salt['grains.filter_by'](
-        osfamilymap,
-        grain='os_family',
-        merge=salt['grains.filter_by'](
-          osmap,
-          grain='os',
-          merge=salt['grains.filter_by'](
-            osfingermap,
-            grain='osfinger',
-            merge=salt['grains.filter_by'](
-              _config,
-              default='lookup'
-            )
-          )
-        )
-      )
-    )
+{%- set _config = salt['config.get'](tplroot, default={}) %}
+
+{%- set zabbix = salt['slsutil.merge_all']([
+      defaults.get(tplroot, {}),
+      osfamilymap.get(grains.get('os_family'), {}) or {},
+      osmap.get(grains.get('os'), {}) or {},
+      osfingermap.get(grains.get('osfinger'), {}) or {},
+      _config.get('lookup', {}) or {},
+    ], strategy='recurse', merge_lists=False)
 %}
-
-{%- set zabbix = config %}
