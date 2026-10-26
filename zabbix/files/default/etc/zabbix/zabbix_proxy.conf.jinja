@@ -224,6 +224,19 @@
 # DBPort=
 {% if settings.get('dbport', defaults.get('dbport', False)) %}DBPort={{ settings.get('dbport', defaults.dbport) }}{% endif %}
 
+{#- Zabbix 8.0+ #}
+{% if zabbix.version_repo == '8.0' -%}
+### Option: TelemetryProvider
+#\tConfiguration of telemetry data source using format <provider>[;<options>].
+#\t<provider> - one of: clickhouse.
+#\t<options> - comma delimited key=value pairs.
+#
+# Mandatory: no
+# Default:
+# TelemetryProvider=
+{% if settings.get('telemetryprovider', defaults.get('telemetryprovider', False)) %}TelemetryProvider={{ settings.get('telemetryprovider', defaults.telemetryprovider) }}{% endif %}
+{% endif -%}
+
 ######### PROXY SPECIFIC PARAMETERS #############
 
 ### Option: ProxyLocalBuffer
@@ -356,6 +369,19 @@
 # Default:
 # StartHTTPPollers=1
 {% if settings.get('starthttppollers', defaults.get('starthttppollers', False)) %}StartHTTPPollers={{ settings.get('starthttppollers', defaults.starthttppollers) }}{% endif %}
+
+{#- Zabbix 8.0+ #}
+{% if zabbix.version_repo == '8.0' -%}
+### Option: StartTelemetryQueryPollers
+#\tNumber of pre-forked instances of Telemetry query pollers.
+#\tAlso see MaxConcurrentChecksPerPoller.
+#
+# Mandatory: no
+# Range: 0-1000
+# Default:
+# StartTelemetryQueryPollers=1
+{% if settings.get('starttelemetryquerypollers', defaults.get('starttelemetryquerypollers', False)) %}StartTelemetryQueryPollers={{ settings.get('starttelemetryquerypollers', defaults.starttelemetryquerypollers) }}{% endif %}
+{% endif -%}
 
 ### Option: JavaGateway
 #	IP address (or hostname) of Zabbix Java gateway.
@@ -818,4 +844,291 @@ LoadModule={{ loadmodule }}
 # Default:
 # TLSPSKFile=
 {% if settings.get('tlspskfile', defaults.get('tlspskfile', False)) %}TLSPSKFile={{ settings.get('tlspskfile', defaults.tlspskfile) }}{% endif %}
+{#- Zabbix 8.0+ #}
+{% if zabbix.version_repo == '8.0' -%}
+### Option: TLSListen
+#\tSetting this option enforces that only encrypted connections are accepted by trappers.
+#\tSupported values:
+#\t\trequired - accept only TLS connections
+#
+# Mandatory: no
+# Default:
+# TLSListen=
+{% if settings.get('tlslisten', defaults.get('tlslisten', False)) %}TLSListen={{ settings.get('tlslisten', defaults.tlslisten) }}{% endif %}
+
+####### For advanced users - TLS ciphersuite selection criteria #######
+
+### Option: TLSCipherCert13
+#\tCipher string for OpenSSL 1.1.1 or newer in TLS 1.3.
+#\tOverride the default ciphersuite selection criteria for certificate-based encryption.
+#
+# Mandatory: no
+# Default:
+# TLSCipherCert13=
+{% if settings.get('tlsciphercert13', defaults.get('tlsciphercert13', False)) %}TLSCipherCert13={{ settings.get('tlsciphercert13', defaults.tlsciphercert13) }}{% endif %}
+
+### Option: TLSCipherCert
+#\tGnuTLS priority string or OpenSSL (TLS 1.2) cipher string.
+#\tOverride the default ciphersuite selection criteria for certificate-based encryption.
+#
+# Mandatory: no
+# Default:
+# TLSCipherCert=
+{% if settings.get('tlsciphercert', defaults.get('tlsciphercert', False)) %}TLSCipherCert={{ settings.get('tlsciphercert', defaults.tlsciphercert) }}{% endif %}
+
+### Option: TLSCipherPSK13
+#\tCipher string for OpenSSL 1.1.1 or newer in TLS 1.3.
+#\tOverride the default ciphersuite selection criteria for PSK-based encryption.
+#
+# Mandatory: no
+# Default:
+# TLSCipherPSK13=
+{% if settings.get('tlscipherpsk13', defaults.get('tlscipherpsk13', False)) %}TLSCipherPSK13={{ settings.get('tlscipherpsk13', defaults.tlscipherpsk13) }}{% endif %}
+
+### Option: TLSCipherPSK
+#\tGnuTLS priority string or OpenSSL (TLS 1.2) cipher string.
+#\tOverride the default ciphersuite selection criteria for PSK-based encryption.
+#
+# Mandatory: no
+# Default:
+# TLSCipherPSK=
+{% if settings.get('tlscipherpsk', defaults.get('tlscipherpsk', False)) %}TLSCipherPSK={{ settings.get('tlscipherpsk', defaults.tlscipherpsk) }}{% endif %}
+
+### Option: TLSCipherAll13
+#\tCipher string for OpenSSL 1.1.1 or newer in TLS 1.3.
+#\tOverride the default ciphersuite selection criteria for certificate- and PSK-based encryption.
+#
+# Mandatory: no
+# Default:
+# TLSCipherAll13=
+{% if settings.get('tlscipherall13', defaults.get('tlscipherall13', False)) %}TLSCipherAll13={{ settings.get('tlscipherall13', defaults.tlscipherall13) }}{% endif %}
+
+### Option: TLSCipherAll
+#\tGnuTLS priority string or OpenSSL (TLS 1.2) cipher string.
+#\tOverride the default ciphersuite selection criteria for certificate- and PSK-based encryption.
+#
+# Mandatory: no
+# Default:
+# TLSCipherAll=
+{% if settings.get('tlscipherall', defaults.get('tlscipherall', False)) %}TLSCipherAll={{ settings.get('tlscipherall', defaults.tlscipherall) }}{% endif %}
+
+### Option: DBTLSConnect
+#\tSetting this option enforces to use TLS connection to database.
+#\t\trequired    - connect using TLS
+#\t\tverify_ca   - connect using TLS and verify certificate
+#\t\tverify_full - connect using TLS, verify certificate and verify that database identity specified by DBHost matches its certificate
+#
+# Mandatory: no
+# Default:
+# DBTLSConnect=
+{% if settings.get('dbtlsconnect', defaults.get('dbtlsconnect', False)) %}DBTLSConnect={{ settings.get('dbtlsconnect', defaults.dbtlsconnect) }}{% endif %}
+
+### Option: DBTLSCAFile
+#\tFull pathname of a file containing the top-level CA(s) certificates for database certificate verification.
+#\tSupported only for MySQL and PostgreSQL
+#
+# Mandatory: no (yes, if DBTLSConnect set to one of: verify_ca, verify_full)
+# Default:
+# DBTLSCAFile=
+{% if settings.get('dbtlscafile', defaults.get('dbtlscafile', False)) %}DBTLSCAFile={{ settings.get('dbtlscafile', defaults.dbtlscafile) }}{% endif %}
+
+### Option: DBTLSCertFile
+#\tFull pathname of file containing Zabbix proxy certificate for authenticating to database.
+#\tSupported only for MySQL and PostgreSQL
+#
+# Mandatory: no
+# Default:
+# DBTLSCertFile=
+{% if settings.get('dbtlscertfile', defaults.get('dbtlscertfile', False)) %}DBTLSCertFile={{ settings.get('dbtlscertfile', defaults.dbtlscertfile) }}{% endif %}
+
+### Option: DBTLSKeyFile
+#\tFull pathname of file containing the private key for authenticating to database.
+#\tSupported only for MySQL and PostgreSQL
+#
+# Mandatory: no
+# Default:
+# DBTLSKeyFile=
+{% if settings.get('dbtlskeyfile', defaults.get('dbtlskeyfile', False)) %}DBTLSKeyFile={{ settings.get('dbtlskeyfile', defaults.dbtlskeyfile) }}{% endif %}
+
+### Option: DBTLSCipher
+#\tThe list of encryption ciphers that Zabbix proxy permits for TLS protocols up through TLSv1.2
+#\tSupported only for MySQL
+#
+# Mandatory no
+# Default:
+# DBTLSCipher=
+{% if settings.get('dbtlscipher', defaults.get('dbtlscipher', False)) %}DBTLSCipher={{ settings.get('dbtlscipher', defaults.dbtlscipher) }}{% endif %}
+
+### Option: DBTLSCipher13
+#\tThe list of encryption ciphersuites that Zabbix proxy permits for TLSv1.3 protocol
+#\tSupported only for MySQL, starting from version 8.0.16
+#
+# Mandatory no
+# Default:
+# DBTLSCipher13=
+{% if settings.get('dbtlscipher13', defaults.get('dbtlscipher13', False)) %}DBTLSCipher13={{ settings.get('dbtlscipher13', defaults.dbtlscipher13) }}{% endif %}
+
+### Option: Vault
+#\tSpecifies vault:
+#\t\tHashiCorp - HashiCorp KV Secrets Engine - Version 2
+#\t\tCyberArk  - CyberArk Central Credential Provider
+#
+# Mandatory: no
+# Default:
+# Vault=HashiCorp
+{% if settings.get('vault', defaults.get('vault', False)) %}Vault={{ settings.get('vault', defaults.vault) }}{% endif %}
+
+### Option: VaultAppRoleID
+#\tVault AppRole role ID.
+#\tCan be used with VaultAppSecretID for authentication instead of VaultToken.
+#\tCannot be used with VaultToken.
+#\tSupported only for HashiCorp vault.
+#
+# Mandatory: no
+# Default:
+# VaultAppRoleID=
+{% if settings.get('vaultapproleid', defaults.get('vaultapproleid', False)) %}VaultAppRoleID={{ settings.get('vaultapproleid', defaults.vaultapproleid) }}{% endif %}
+
+### Option: VaultAppSecretID
+#\tVault AppRole secret ID.
+#\tCan be used with VaultAppRoleID for authentication instead of VaultToken.
+#\tCannot be used with VaultToken.
+#\tSupported only for HashiCorp vault.
+#
+# Mandatory: no
+# Default:
+# VaultAppSecretID=
+{% if settings.get('vaultappsecretid', defaults.get('vaultappsecretid', False)) %}VaultAppSecretID={{ settings.get('vaultappsecretid', defaults.vaultappsecretid) }}{% endif %}
+
+### Option: VaultToken
+#\tVault authentication token that should have been generated exclusively for Zabbix proxy with read only permission to path
+#\tspecified in optional VaultDBPath configuration parameter.
+#\tIt is an error if VaultToken and VAULT_TOKEN environment variable are defined at the same time.
+#\tCannot be used with VaultAppRoleID.
+#\tSupported only for HashiCorp vault.
+#
+# Mandatory: no
+# Default:
+# VaultToken=
+{% if settings.get('vaulttoken', defaults.get('vaulttoken', False)) %}VaultToken={{ settings.get('vaulttoken', defaults.vaulttoken) }}{% endif %}
+
+### Option: VaultURL
+#\tVault server HTTP[S] URL. System-wide CA certificates directory will be used if SSLCALocation is not specified.
+#
+# Mandatory: no
+# Default:
+# VaultURL=https://127.0.0.1:8200
+{% if settings.get('vaulturl', defaults.get('vaulturl', False)) %}VaultURL={{ settings.get('vaulturl', defaults.vaulturl) }}{% endif %}
+
+### Option: VaultPrefix
+#\tCustom prefix for Vault path or query depending on the Vault.
+#\tMost suitable defaults will be used if not specified.
+#\tNote that 'data' is automatically appended after mountpoint for HashiCorp if VaultPrefix is not specified.
+#
+# Mandatory: no
+# Default:
+# VaultPrefix=
+{% if settings.get('vaultprefix', defaults.get('vaultprefix', False)) %}VaultPrefix={{ settings.get('vaultprefix', defaults.vaultprefix) }}{% endif %}
+
+### Option: VaultDBPath
+#\tVault path or query depending on the Vault from where credentials for database will be retrieved by keys.
+#\tThis option can only be used if DBUser and DBPassword are not specified.
+#
+# Mandatory: no
+# Default:
+# VaultDBPath=
+{% if settings.get('vaultdbpath', defaults.get('vaultdbpath', False)) %}VaultDBPath={{ settings.get('vaultdbpath', defaults.vaultdbpath) }}{% endif %}
+
+### Option: VaultTLSCertFile
+#\tName of the SSL certificate file used for client authentication.
+#\tThe directory containing this file is specified by configuration parameter SSLCertLocation.
+#
+# Mandatory: no
+# Default:
+# VaultTLSCertFile=
+{% if settings.get('vaulttlscertfile', defaults.get('vaulttlscertfile', False)) %}VaultTLSCertFile={{ settings.get('vaulttlscertfile', defaults.vaulttlscertfile) }}{% endif %}
+
+### Option: VaultTLSKeyFile
+#\tName of the SSL private key file used for client authentication.
+#\tThe directory containing this file is specified by configuration parameter SSLKeyLocation.
+#
+# Mandatory: no
+# Default:
+# VaultTLSKeyFile=
+{% if settings.get('vaulttlskeyfile', defaults.get('vaulttlskeyfile', False)) %}VaultTLSKeyFile={{ settings.get('vaulttlskeyfile', defaults.vaulttlskeyfile) }}{% endif %}
+
+####### For advanced users - TCP-related fine-tuning parameters #######
+
+## Option: ListenBacklog
+#\tThe maximum number of pending connections in the queue.
+#
+# Mandatory: no
+# Range: 0 - INT_MAX (depends on system)
+# Default: SOMAXCONN
+# ListenBacklog=
+{% if settings.get('listenbacklog', defaults.get('listenbacklog', False)) %}ListenBacklog={{ settings.get('listenbacklog', defaults.listenbacklog) }}{% endif %}
+
+####### Browser monitoring #######
+
+### Option: WebDriverURL
+#\tWebDriver interface HTTP[S] URL.
+#
+# Mandatory: no
+# Default:
+# WebDriverURL=
+{% if settings.get('webdriverurl', defaults.get('webdriverurl', False)) %}WebDriverURL={{ settings.get('webdriverurl', defaults.webdriverurl) }}{% endif %}
+
+### Option: StartBrowserPollers
+#\tNumber of pre-forked instances of browser item pollers.
+#
+# Mandatory: no
+# Range: 0-1000
+# Default:
+# StartBrowserPollers=1
+{% if settings.get('startbrowserpollers', defaults.get('startbrowserpollers', False)) %}StartBrowserPollers={{ settings.get('startbrowserpollers', defaults.startbrowserpollers) }}{% endif %}
+
+####### APM #######
+
+### Option: APMListenIP
+#\tIP address that APM endpoint should listen on.
+#
+# Mandatory: no
+# Default:
+# APMListenIP=
+{% if settings.get('apmlistenip', defaults.get('apmlistenip', False)) %}APMListenIP={{ settings.get('apmlistenip', defaults.apmlistenip) }}{% endif %}
+
+### Option: APMListenPort
+#\tPort that APM endpoint should listen on.
+#
+# Mandatory: no
+# Range: 1024-32767
+# Default:
+# APMListenPort=10054
+{% if settings.get('apmlistenport', defaults.get('apmlistenport', False)) %}APMListenPort={{ settings.get('apmlistenport', defaults.apmlistenport) }}{% endif %}
+
+### Option: APMTLSCAFile
+#\tFull pathname of a file containing the top-level CA(s) certificates for APM endpoint.
+#
+# Mandatory: no
+# Default:
+# APMTLSCAFile=
+{% if settings.get('apmtlscafile', defaults.get('apmtlscafile', False)) %}APMTLSCAFile={{ settings.get('apmtlscafile', defaults.apmtlscafile) }}{% endif %}
+
+### Option: APMTLSCertFile
+#\tFull pathname of a file containing the APM endpoint certificate or certificate chain.
+#
+# Mandatory: no
+# Default:
+# APMTLSCertFile=
+{% if settings.get('apmtlscertfile', defaults.get('apmtlscertfile', False)) %}APMTLSCertFile={{ settings.get('apmtlscertfile', defaults.apmtlscertfile) }}{% endif %}
+
+### Option: APMTLSKeyFile
+#\tFull pathname of a file containing the APM endpoint private key.
+#
+# Mandatory: no
+# Default:
+# APMTLSKeyFile=
+{% if settings.get('apmtlskeyfile', defaults.get('apmtlskeyfile', False)) %}APMTLSKeyFile={{ settings.get('apmtlskeyfile', defaults.apmtlskeyfile) }}{% endif %}
+
+{% endif -%}
 {{ settings.get('extra_conf','') }}

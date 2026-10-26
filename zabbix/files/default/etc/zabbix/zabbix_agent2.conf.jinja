@@ -532,6 +532,20 @@ Plugins.Log.MaxLinesPerSecond={{ settings.get('maxlinespersecond', defaults.maxl
 AllowKey={{ settings.get('allowkey', defaults.allowkey) }}
 {% endif %}
 
+{#- Zabbix 8.0+ #}
+{% if zabbix.version_repo == '8.0' -%}
+### Option: AllowKeyRegexp
+#       Allow execution of item keys matching pattern.
+#       Key pattern is regex expression.
+#       Parameters are processed one by one according their appearance order.
+#       If no AllowKey, AllowKeyRegexp, DenyKey or DenyKeyRegexp rules defined, all keys are allowed.
+#
+# Mandatory: no
+{%- if settings.get('allowkeyregexp', defaults.get('allowkeyregexp', False)) -%}
+AllowKeyRegexp={{ settings.get('allowkeyregexp', defaults.allowkeyregexp) }}
+{% endif %}
+{% endif -%}
+
 ### Option: DenyKey
 #       Deny execution of items keys matching pattern.
 #       Multiple keys matching rules may be defined in combination with AllowKey.
@@ -546,6 +560,20 @@ AllowKey={{ settings.get('allowkey', defaults.allowkey) }}
 {%- if settings.get('denykey', defaults.get('denykey', False)) -%}
 DenyKey={{ settings.get('denykey', defaults.denykey) }}
 {% endif %}
+
+{#- Zabbix 8.0+ #}
+{% if zabbix.version_repo == '8.0' -%}
+### Option: DenyKeyRegexp
+#       Deny execution of items keys matching pattern.
+#       Key pattern is regex expression.
+#       Parameters are processed one by one according their appearance order.
+#       If no AllowKey, AllowKeyRegexp, DenyKey or DenyKeyRegexp rules defined, all keys are allowed.
+#
+# Mandatory: no
+{%- if settings.get('denykeyregexp', defaults.get('denykeyregexp', False)) -%}
+DenyKeyRegexp={{ settings.get('denykeyregexp', defaults.denykeyregexp) }}
+{% endif %}
+{% endif -%}
 
 ### Option: Plugins.SystemRun.LogRemoteCommands
 #	Enable logging of executed shell commands as warnings.

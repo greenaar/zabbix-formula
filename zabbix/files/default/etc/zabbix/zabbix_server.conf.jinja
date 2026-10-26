@@ -192,6 +192,7 @@ AllowUnsupportedDBVersions={{ settings.get('allowunsupporteddb', defaults.allowu
 # Mandatory: no
 # Default:
 # HistoryStorageURL=
+{#- Deprecated in Zabbix 8.0 — replaced by HistoryProvider url option. #}
 {% if settings.get('historystorageurl', defaults.get('historystorageurl', False)) -%}
 HistoryStorageURL={{ settings.get('historystorageurl', defaults.historystorageurl) }}
 {% endif %}
@@ -201,6 +202,7 @@ HistoryStorageURL={{ settings.get('historystorageurl', defaults.historystorageur
 # Mandatory: no
 # Default:
 # HistoryStorageTypes=uint,dbl,str,log,text
+{#- Deprecated in Zabbix 8.0 — replaced by HistoryProvider value_types option. #}
 {% if settings.get('historystoragetypes', defaults.get('historystoragetypes', False)) -%}
 HistoryStorageTypes={{ settings.get('historystoragetypes', defaults.historystoragetypes) }}
 {% endif %}
@@ -213,9 +215,37 @@ HistoryStorageTypes={{ settings.get('historystoragetypes', defaults.historystora
 # Mandatory: no
 # Default:
 # HistoryStorageDateIndex=0
+{#- Deprecated in Zabbix 8.0 — replaced by HistoryProvider date_index option. #}
 {% if settings.get('historystoragedateindex', defaults.get('historystoragedateindex', False)) -%}
 HistoryStorageDateIndex={{ settings.get('historystoragedateindex', defaults.historystoragedateindex) }}
 {% endif %}
+
+{#- Zabbix 8.0+ — HistoryProvider replaces HistoryStorageURL/Types/DateIndex above. #}
+{% if zabbix.version_repo == '8.0' -%}
+### Option: HistoryProvider
+#	Configuration of history storage provider using format <provider>[;<options>].
+#	<provider> - one of: sql (default), elasticsearch, clickhouse.
+#	<options> - comma delimited key=value pairs.
+#
+# Mandatory: no
+# Default:
+# HistoryProvider=
+{% if settings.get('historyprovider', defaults.get('historyprovider', False)) -%}
+HistoryProvider={{ settings.get('historyprovider', defaults.historyprovider) }}
+{% endif -%}
+
+### Option: TelemetryProvider
+#	Configuration of telemetry data source using format <provider>[;<options>].
+#	<provider> - one of: clickhouse.
+#	<options> - comma delimited key=value pairs.
+#
+# Mandatory: no
+# Default:
+# TelemetryProvider=
+{% if settings.get('telemetryprovider', defaults.get('telemetryprovider', False)) -%}
+TelemetryProvider={{ settings.get('telemetryprovider', defaults.telemetryprovider) }}
+{% endif -%}
+{% endif -%}
 
 ### Option: ExportDir
 #   Directory for real time export of events, history and trends in newline delimited JSON format.
@@ -299,6 +329,21 @@ StartPreprocessors={{ settings.get('startpreprocessors', defaults.startpreproces
 {% if settings.get('startconnectors', defaults.get('startconnectors', False)) -%}
 StartConnectors={{ settings.get('startconnectors', defaults.startconnectors) }}
 {% endif %}
+
+{#- Zabbix 8.0+ #}
+{% if zabbix.version_repo == '8.0' -%}
+### Option: StartTelemetryQueryPollers
+#\tNumber of pre-forked instances of Telemetry query pollers.
+#\tAlso see MaxConcurrentChecksPerPoller.
+#
+# Mandatory: no
+# Range: 0-1000
+# Default:
+# StartTelemetryQueryPollers=1
+{% if settings.get('starttelemetryquerypollers', defaults.get('starttelemetryquerypollers', False)) -%}
+StartTelemetryQueryPollers={{ settings.get('starttelemetryquerypollers', defaults.starttelemetryquerypollers) }}
+{% endif -%}
+{% endif -%}
 
 ### Option: StartPollersUnreachable
 #	Number of pre-forked instances of pollers for unreachable hosts (including IPMI and Java).
@@ -1161,6 +1206,35 @@ VaultURL={{ settings.get('vaulturl', defaults.vaulturl) }}
 VaultDBPath={{ settings.get('vaultdbpath', defaults.vaultdbpath) }}
 {% endif %}
 
+{#- Zabbix 8.0+ #}
+{% if zabbix.version_repo == '8.0' -%}
+### Option: VaultAppRoleID
+#\tVault AppRole role ID.
+#\tCan be used with VaultAppSecretID for authentication instead of VaultToken.
+#\tCannot be used with VaultToken.
+#\tSupported only for HashiCorp vault.
+#
+# Mandatory: no
+# Default:
+# VaultAppRoleID=
+{% if settings.get('vaultapproleid', defaults.get('vaultapproleid', False)) -%}
+VaultAppRoleID={{ settings.get('vaultapproleid', defaults.vaultapproleid) }}
+{% endif %}
+
+### Option: VaultAppSecretID
+#\tVault AppRole secret ID.
+#\tCan be used with VaultAppRoleID for authentication instead of VaultToken.
+#\tCannot be used with VaultToken.
+#\tSupported only for HashiCorp vault.
+#
+# Mandatory: no
+# Default:
+# VaultAppSecretID=
+{% if settings.get('vaultappsecretid', defaults.get('vaultappsecretid', False)) -%}
+VaultAppSecretID={{ settings.get('vaultappsecretid', defaults.vaultappsecretid) }}
+{% endif %}
+{% endif -%}
+
 ### Option: VaultTLSCertFile
 #       Name of the SSL certificate file used for client authentication. The certificate file must be in PEM1 format.
 #       If the certificate file contains also the private key, leave the SSL key file field empty. The directory
@@ -1280,3 +1354,55 @@ HANodeName={{ settings.get('hanodename', defaults.hanodename) }}
 {% if settings.get('nodeaddress', defaults.get('nodeaddress', False)) -%}
 NodeAddress={{ settings.get('nodeaddress', defaults.nodeaddress) }}
 {% endif %}
+
+{#- Zabbix 8.0+ #}
+{% if zabbix.version_repo == '8.0' -%}
+####### Browser monitoring #######
+
+### Option: WebDriverURL
+#\tWebDriver interface HTTP[S] URL.
+#\tFor example http://localhost:4444 used with Selenium WebDriver standalone server.
+#
+# Mandatory: no
+# Default:
+# WebDriverURL=
+{% if settings.get('webdriverurl', defaults.get('webdriverurl', False)) -%}
+WebDriverURL={{ settings.get('webdriverurl', defaults.webdriverurl) }}
+{% endif %}
+
+### Option: StartBrowserPollers
+#\tNumber of pre-forked instances of browser item pollers.
+#
+# Mandatory: no
+# Range: 0-1000
+# Default:
+# StartBrowserPollers=1
+{% if settings.get('startbrowserpollers', defaults.get('startbrowserpollers', False)) -%}
+StartBrowserPollers={{ settings.get('startbrowserpollers', defaults.startbrowserpollers) }}
+{% endif %}
+
+####### Bridge-adapter #######
+
+### Option: EnableMobileDevices
+#\tEnable mobile device support on Zabbix server.
+#\t0 - disable
+#\t1 - enable
+#
+# Mandatory: no
+# Default:
+# EnableMobileDevices=1
+{% if settings.get('enablemobiledevices', defaults.get('enablemobiledevices', False)) -%}
+EnableMobileDevices={{ settings.get('enablemobiledevices', defaults.enablemobiledevices) }}
+{% endif %}
+
+### Option: BridgeAdapterURL
+#\tBridge Adapter HTTP[S] URL.
+#\tExample: https://bridge-adapter.example.com:10054/rpc
+#
+# Mandatory: no
+# Default:
+# BridgeAdapterURL=
+{% if settings.get('bridgeadapterurl', defaults.get('bridgeadapterurl', False)) -%}
+BridgeAdapterURL={{ settings.get('bridgeadapterurl', defaults.bridgeadapterurl) }}
+{% endif %}
+{% endif -%}

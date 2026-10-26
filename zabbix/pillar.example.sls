@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: ft=yaml
 #
-# pillar.example.sls — reference pillar for the zabbix-formula (Zabbix 7.4)
+# pillar.example.sls — reference pillar for the zabbix-formula (Zabbix 7.4 / 8.0)
 #
 # Remember the split described in README.md:
 #   zabbix:            -> HOW to install things (packages, versions, paths, service names)
@@ -18,7 +18,8 @@
 # ---------------------------------------------------------------------------
 
 zabbix:
-  # Only Zabbix 7.4 is supported by this formula's templates/repos.
+  # Set to 7.4 (default) or 8.0 to select the template configuration set.
+  # Zabbix 8.0-specific config options are only rendered when this is '8.0'.
   version_repo: 7.4
 
   # System account used to run every zabbix daemon.
@@ -117,6 +118,10 @@ zabbix-agent:
   # understand the security tradeoff of remote command execution.
   # allowkey: 'system.run[*]'
 
+  # Zabbix 8.0+ — regex-based key allow/deny rules (combined with wildcard rules above):
+  # allowkeyregexp: 'docker\.info\[.*\]'
+  # denykeyregexp: 'system\.run\[.*\]'
+
   # TLS between agent and server/proxy (optional):
   # tlsconnect: psk
   # tlsaccept: psk
@@ -140,6 +145,10 @@ zabbix-server:
   logfilesize: '0'
   timeout: '10'
 
+  # Zabbix 8.0+ — HistoryProvider replaces the legacy HistoryStorageURL/Types/DateIndex:
+  # historyprovider: 'clickhouse;value_types="uint,dbl,str,log,text,json",url=http://localhost:8123,db=zabbix,username=zabbix,password=zabbix'
+  # telemetryprovider: 'clickhouse;url=http://localhost:8123,db=zabbix,username=zabbix,password=zabbix'
+
 # ---------------------------------------------------------------------------
 # Proxy runtime configuration (only needed on proxy hosts)
 # ---------------------------------------------------------------------------
@@ -155,6 +164,9 @@ zabbix-proxy:
   # dbpassword: 'change-me-strong-password'
   includes:
     - /etc/zabbix/zabbix_proxy.d/
+
+  # Zabbix 8.0+
+  # telemetryprovider: 'clickhouse;url=http://localhost:8123,db=zabbix,username=zabbix,password=zabbix'
 
 # ---------------------------------------------------------------------------
 # Frontend runtime configuration

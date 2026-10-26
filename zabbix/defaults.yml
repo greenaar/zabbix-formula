@@ -2,9 +2,11 @@
 # vim: ft=yaml
 ---
 zabbix:
-  # This formula only targets Zabbix 7.4. Older versions are no longer
-  # supported: repo URLs, GPG keys, and the config templates assume the
-  # 7.4 package layout (see repo.sls and mysql/pgsql schema.sls).
+  # Supported version_repo values: 7.4 (default), 8.0.
+  # When set to 8.0, additional config options specific to Zabbix 8.0 are
+  # rendered in the config templates (see the .jinja files). The 7.4 template
+  # set is a subset of the 8.0 set — 7.4 still works under 8.0, but 8.0-only
+  # options are skipped when version_repo is 7.4.
   version_repo: 7.4
   user: zabbix
   group: zabbix
@@ -25,6 +27,9 @@ zabbix:
       - 127.0.0.1
     includes:
       - /etc/zabbix/zabbix_agentd2.d/
+    # Zabbix 8.0+ agent key allow/deny regex support
+    allowkeyregexp: ''
+    denykeyregexp: ''
   server:
     pkgs:
       - zabbix-web-service
@@ -102,6 +107,14 @@ zabbix:
     vmwareperffrequency: '60'
     vmwaretimeout: '10'
     webserviceurl: 'http://localhost:10053/report'
+    # Zabbix 8.0+ options
+    historyprovider: ''
+    telemetryprovider: ''
+    starttelemetryquerypollers: '1'
+    enablemobiledevices: '1'
+    bridgeadapterurl: ''
+    vaultapproleid: ''
+    vaultappsecretid: ''
   frontend:
     pkgs:
       - zabbix-web-service
@@ -124,6 +137,16 @@ zabbix:
     dbname: /var/lib/zabbix/zabbix_proxy.db
     pidfile: /var/run/zabbix/zabbix_proxy.pid
     logfile: /var/log/zabbix/zabbix_proxy.log
+    # Zabbix 8.0+ options
+    telemetryprovider: ''
+    starttelemetryquerypollers: '1'
+    apmlistenip: ''
+    apmlistenport: '10054'
+    apmtlscafile: ''
+    apmtlscertfile: ''
+    apmtlskeyfile: ''
+    vaultapproleid: ''
+    vaultappsecretid: ''
   mysql:
     pkgs:
       - zabbix-sql-scripts
